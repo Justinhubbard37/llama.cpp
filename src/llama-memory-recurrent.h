@@ -118,6 +118,8 @@ public:
     std::vector<ggml_tensor *> s_l;
     // a second conv history that must stay replicated across devices, so it cannot share the r row
     std::vector<ggml_tensor *> p_l;
+    // I32 [n_rs_seq + 1] = {n_rs_seq, ..., 0}, the rollback slot of each conv window, the same for every ubatch
+    std::vector<ggml_tensor *> slot_l;
 
 private:
     //const llama_model & model;
@@ -127,6 +129,9 @@ private:
 
     // ggml contexts for the RS cache along with the allocated backend buffers:
     llama_memory_bufs ctxs_bufs;
+
+    // the constants of the cache, kept out of the state buffers so that clearing or restoring the state leaves them intact
+    llama_memory_bufs slot_bufs;
 
     // true if no layers - can happen if the layer filter removes all layers
     bool is_empty() const;
@@ -184,6 +189,7 @@ public:
     ggml_tensor * get_r_l(int32_t il) const;
     ggml_tensor * get_s_l(int32_t il) const;
     ggml_tensor * get_p_l(int32_t il) const;
+    ggml_tensor * get_slot_l(int32_t il) const;
 
     int32_t s_copy(int i) const;
 
